@@ -126,6 +126,7 @@ void readInfos()
 			return;
 		}
 	}
+	exit(0);
 }
 void checkCluster()
 {
@@ -135,7 +136,7 @@ void checkCluster()
 
 	for (int i = 0; i < NUM_ATOMS; i++)
 	{
-		if (cluster_id[i] != 0) continue;
+		if (cluster_id[i] != 0 || !cluster_id) continue;
 		cluster_id[i] = id;
 		for (int j = i + 1; j < NUM_ATOMS; j++)
 		{

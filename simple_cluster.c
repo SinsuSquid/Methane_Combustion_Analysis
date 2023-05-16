@@ -106,6 +106,7 @@ void readInfos()
 			return;
 		}
 	}
+	exit(0);
 }
 void checkCluster()
 {
