@@ -9,7 +9,7 @@
 #define MAX_TIMESTEP 10000000
 
 int timestep = 0;
-int *atomid, *atomtype, *cluster_id;
+int *atomid, *atomtype, *mol_id;
 double *x, *y, *z;
 double pbc_x, pbc_y, pbc_z;
 size_t NUM_ATOMS;
@@ -74,7 +74,7 @@ void readInfos()
 
 			atomtype = malloc(NUM_ATOMS * sizeof(int));
 			atomid = malloc(NUM_ATOMS * sizeof(int));
-			cluster_id = malloc(NUM_ATOMS * sizeof(int));
+			mol_id = malloc(NUM_ATOMS * sizeof(int));
 
 			x = malloc(NUM_ATOMS * sizeof(double));
 			y = malloc(NUM_ATOMS * sizeof(double));
@@ -101,7 +101,7 @@ void readInfos()
 				       "%d %d %lf %lf %lf",
 				       &atomid[i], &atomtype[i],
 				       &x[i], &y[i], &z[i]);
-				cluster_id[i] = 0;
+				mol_id[i] = 0;
 			}
 			return;
 		}
@@ -116,12 +116,12 @@ void checkCluster()
 
 	for (int i = 0; i < NUM_ATOMS; i++)
 	{
-		if (cluster_id[i] != 0) continue;
-		cluster_id[i] = id;
+		if (mol_id[i] != 0) continue;
+		mol_id[i] = id;
 		for (int j = i + 1; j < NUM_ATOMS; j++)
 		{
 			// X axis
-			if (cluster_id[j] != 0) continue;
+			if (mol_id[j] != 0) continue;
  			length = 0.0;
 
 			perAxis = sqrt((x[i] - x[j]) * (x[i] - x[j]));
@@ -146,28 +146,28 @@ void checkCluster()
 
 			// It's belong to a same cluster.
 			if (length < RCUT * RCUT)
-				cluster_id[j] = id;
+				mol_id[j] = id;
 		}
 		id++;
 	}
 }
 void writeData()
 {
-	fprintf(fp_out, "ITEM: ATOMS id type x y z cluster_id\n");
+	fprintf(fp_out, "ITEM: ATOMS id type x y z mol_id\n");
 	for (int i = 0; i < NUM_ATOMS; i++)
 		fprintf(fp_out,
 		       "%d %d %lf %lf %lf %d\n",
 		       atomid[i], atomtype[i],
 		       x[i], y[i], z[i],
-		       cluster_id[i]);
+		       mol_id[i]);
 
 	free(atomid); free(atomtype);
 	free(x); free(y); free(z);
-	free(cluster_id);
+	free(mol_id);
 
 	atomid = NULL; atomtype = NULL;
 	x = NULL; y = NULL; z = NULL;
-	cluster_id = NULL;
+	mol_id = NULL;
 }
 void perTimestep()
 {
