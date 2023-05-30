@@ -7,9 +7,8 @@
 #define MAX_LINE_SIZE 100
 #define MAX_NUM_MOLECULES 1000
 #define INDEX_MAX 2000
-// #define TOTAL_TRAJECTORY 10000000
-#define TOTAL_TRAJECTORY     2000000
-#define PLOTTING_GAP          500000
+#define TOTAL_TRAJECTORY 10000000
+#define PLOTTING_GAP       500000
 
 int timestep;
 int numCH3 = 0;
@@ -28,11 +27,50 @@ typedef struct{
 
 void checkSyntax(int argc, char *argv[], FILE **fp_traj, FILE **fp_out, FILE **fp_mol)
 {
-	*fp_traj = fopen("result_clustered.lammpstrj", "r");
-	*fp_mol = fopen("result_molecule.dat", "r");
-	fgets(line, sizeof(line), *fp_mol);
-	*fp_out = fopen("result_GoR.dat", "w");
+	char input_file_prefix[MAX_LINE_SIZE];
+	char output_file_prefix[MAX_LINE_SIZE];
 
+	if (argc == 1){
+		printf("USAGE : ./CH3_GoR -i INPUT_PREFIX");
+		printf(" -o OUTPUT_PREFIX\n");
+		exit(1);
+	}
+
+	for (int i = 0; i < argc; i++)
+	{
+		if (!strcmp(argv[i], "-i"))
+			strcpy(input_file_prefix, argv[i+1]);
+		else if (!strcmp(argv[i], "-o"))
+			strcpy(output_file_prefix, argv[i+1]);
+	}
+
+	if (!input_file_prefix)
+	{
+		printf("No input file found!\n");
+		exit(1);
+	}
+
+	char temp1[MAX_LINE_SIZE], temp2[MAX_LINE_SIZE];
+	strcpy(temp1, input_file_prefix);
+	strcat(temp1, "_clustered.lammpstrj");
+	strcpy(temp2, input_file_prefix);
+	strcat(temp2, "_molecule.dat");
+
+	*fp_traj = fopen(temp1, "r");
+	*fp_mol = fopen(temp2, "r");
+	fgets(line, sizeof(line), *fp_mol);
+
+	char *temp3;
+	if (output_file_prefix)
+	{
+		strcpy(temp3, output_file_prefix);
+	}
+	else
+	{
+		temp3 = "result";
+	}
+	strcat(temp3, "_GoR.dat");
+	*fp_out = fopen(temp3, "w");
 
 	fprintf(*fp_out, "# timestep r g(r)\n");
 }
@@ -187,7 +225,7 @@ int main(int argc, char *argv[])
 
 	checkSyntax(argc, argv, &fp_traj, &fp_out, &fp_mol);
 	beginT = clock();
-	for(; timestep < TOTAL_TRAJECTORY;)
+	while(1)
 	{
 		startT = clock();
 		perTraj(&fp_traj, &fp_out, &fp_mol, &particles, &isCH3);
@@ -196,12 +234,13 @@ int main(int argc, char *argv[])
 		totTime = (double)(endT - beginT) / CLOCKS_PER_SEC;
 		if (timestep % (TOTAL_TRAJECTORY / 100) == 0)
 		{
-		printf("Timestep : %10d | Per Trajectory : %.3lf | Total Time : %.3lf ",
+		printf("Timestep : %10d | Per Trajectory : %.3lf | Total Time : %.3lf\n",
 				timestep, perTime, totTime);
-		printf("cumCH3 : %d\n", cumCH3);
 		}
+		if( timestep == TOTAL_TRAJECTORY) exit(0);
 	}
 
 	fclose(fp_traj); fclose(fp_out);
+	fclose(fp_mol);
 	return 0;
 }
